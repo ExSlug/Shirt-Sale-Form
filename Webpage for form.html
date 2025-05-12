@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NTU Shirt Order Form</title>
+    <style>
+        .error {
+            color: red;
+            font-size: 12px;
+            display: none;
+        }
+        .shirt-row {
+            margin-bottom: 10px;
+        }
+        #paynow-qr {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        function addShirtRow() {
+            let index = document.getElementsByClassName('shirt-row').length;
+            let row = document.createElement('div');
+            row.className = 'shirt-row';
+            row.innerHTML = `
+                <input type="number" name="quantity_${index}" min="1" required placeholder="Qty" style="width: 50px;" oninput="validateShirtRow(this)">
+                <select name="material_${index}" required oninput="validateShirtRow(this)">
+                    <option value="" disabled selected>Material</option>
+                    <option value="Cotton">Cotton</option>
+                    <option value="Drifit">Drifit</option>
+                </select>
+                <select name="size_${index}" required oninput="validateShirtRow(this)">
+                    <option value="" disabled selected>Size</option>
+                    <option value="3XS">3XS</option>
+                    <option value="2XS">2XS</option>
+                    <option value="XS">XS</option>
+                    <option value="S">S</option>
+                    <option value="M">M</option>
+                    <option value="L">L</option>
+                    <option value="XL">XL</option>
+                    <option value="2XL">2XL</option>
+                    <option value="3XL">3XL</option>
+                </select>
+                <select name="color_${index}" required oninput="validateShirtRow(this)">
+                    <option value="" disabled selected>Color</option>
+                    <option value="Red">Red</option>
+                    <option value="Lilac">Lilac</option>
+                    <option value="Dark Blue">Dark Blue</option>
+                    <option value="Light Blue">Light Blue</option>
+                    <option value="Black">Black</option>
+                    <option value="White">White</option>
+                    <option value="Pink">Pink</option>
+                    <option value="Green">Green</option>
+                </select>
+                <button type="button" onclick="this.parentNode.remove(); validateShirtOrders()">Remove</button>
+                <div class="error" id="error_shirt_${index}">Please fill all required fields</div>
+            `;
+            document.getElementById('shirt-orders').appendChild(row);
+            document.getElementById('shirt_count').value = index + 1;
+            validateShirtOrders();
+        }
+
+        function togglePaymentMethod() {
+            let paynow = document.querySelector('input[name="paynow"]:checked').value;
+            document.getElementById('payment-method-container').style.display = (paynow === "No") ? "block" : "none";
+            document.getElementById('paynow-qr').style.display = (paynow === "Yes") ? "block" : "none";
+            validatePaymentMethod();
+        }
+
+        function validateField(field, errorId) {
+            const errorElement = document.getElementById(errorId);
+            if (!field.value) {
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function validateShirtRow(element) {
+            const row = element.closest('.shirt-row');
+            const index = row.querySelector('input[type="number"]').name.split('_')[1];
+            const quantity = row.querySelector(`input[name="quantity_${index}"]`).value;
+            const material = row.querySelector(`select[name="material_${index}"]`).value;
+            const size = row.querySelector(`select[name="size_${index}"]`).value;
+            const color = row.querySelector(`select[name="color_${index}"]`).value;
+            const errorElement = document.getElementById(`error_shirt_${index}`);
+
+            if (!quantity || !material || !size || !color) {
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function validateShirtOrders() {
+            const shirtRows = document.getElementsByClassName('shirt-row').length;
+            const errorElement = document.getElementById('error_shirt_orders');
+            if (shirtRows === 0) {
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function validatePaymentMethod() {
+            const paynowNo = document.querySelector('input[name="paynow"][value="No"]:checked');
+            const paymentMethod = document.getElementById('payment_method');
+            const errorElement = document.getElementById('error_payment_method');
+
+            if (paynowNo && !paymentMethod.value) {
+                errorElement.style.display = 'block';
+            } else {
+                errorElement.style.display = 'none';
+            }
+        }
+
+        function validateForm() {
+            validateField(document.getElementById('name'), 'error_name');
+            validateField(document.getElementById('email'), 'error_email');
+            validateField(document.getElementById('telegram'), 'error_telegram');
+            validateField(document.getElementById('payment_proof'), 'error_payment_proof');
+            validatePaymentMethod();
+            validateShirtOrders();
+
+            const shirtRows = document.getElementsByClassName('shirt-row');
+            for (let row of shirtRows) {
+                const index = row.querySelector('input[type="number"]').name.split('_')[1];
+                validateShirtRow(row.querySelector(`input[name="quantity_${index}"]`));
+            }
+        }
+    </script>
+</head>
+<body>
+    <h2>NTU Shirt Order Form</h2>
+    <form method="POST" enctype="multipart/form-data" oninput="validateForm()">
+        <label>Name: 
+            <br>
+            <input type="text" name="name" id="name" required oninput="validateField(this, 'error_name')"></label>
+            <div class="error" id="error_name">This field is required</div><br>
+        <label>NTU Email: 
+            <br>
+            <input type="email" name="email" id="email" required oninput="validateField(this, 'error_email')"></label>
+            <div class="error" id="error_email">This field is required</div><br>
+        <label>Telegram Handle (or Phone No.): 
+            <br>
+            <input type="text" name="telegram" id="telegram" required oninput="validateField(this, 'error_telegram')"></label>
+            <div class="error" id="error_telegram">This field is required</div><br>
+
+        <h3>Shirt Order</h3>
+        <div id="shirt-orders"></div>
+        <button type="button" onclick="addShirtRow()">Add Shirt</button>
+        <div class="error" id="error_shirt_orders">At least one shirt order is required</div>
+        <input type="hidden" name="shirt_count" id="shirt_count" value="0">
+
+        <h3>Payment</h3>
+        <label>Do you have PayNow? </label>
+        <label><input type="radio" name="paynow" value="Yes" required onclick="togglePaymentMethod()"> Yes</label>
+        <label><input type="radio" name="paynow" value="No" required onclick="togglePaymentMethod()"> No</label>
+        <div id="paynow-qr">
+            <img src="placeholder-qr.png" alt="PayNow QR Code" style="width: 150px; height: 150px;">
+        </div>
+
+        <div id="payment-method-container" style="display:none;">
+            <label>Payment Method: 
+                <input type="text" name="payment_method" id="payment_method" oninput="validatePaymentMethod()">
+            </label>
+            <div class="error" id="error_payment_method">This field is required</div>
+        </div>
+        <br>
+        <label>Upload Payment Proof: 
+            <input type="file" name="payment_proof" id="payment_proof" accept="image/*" required oninput="validateField(this, 'error_payment_proof')">
+        </label>
+        <div class="error" id="error_payment_proof">This field is required</div><br>
+
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
